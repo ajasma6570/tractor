@@ -1,9 +1,9 @@
 
-export interface Customer {
+export type Customer = {
     id: string;
     name: string;
     email: string;
-    phone?: string;
-    createdAt: Date;
-    updatedAt: Date;
+    phone: string | null; // Change from undefined to null
+    createdAt?: Date;
+    updatedAt?: Date;
 }

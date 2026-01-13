@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useCreateCustomer, useCustomers } from "@/hooks/useCustomerMutations";
+import { Customer } from "@/types/customer";
 
 export default function Page() {
   const [formData, setFormData] = useState({
@@ -82,7 +83,7 @@ export default function Page() {
           <p>Loading customers...</p>
         ) : (
           <ul>
-            {customers.map((customer) => (
+            {customers.map((customer: Customer) => (
               <li key={customer.id}>
                 {customer.name} - {customer.email} - {customer.phone ?? ""}
               </li>
