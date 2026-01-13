@@ -2,172 +2,111 @@
 
 import * as React from "react";
 import {
-  AudioWaveform,
-  BookOpen,
-  Bot,
-  Command,
-  Frame,
-  GalleryVerticalEnd,
+  Home,
+  Users,
+  History,
+  Bell,
+  Settings,
+  ClipboardList,
   Map,
-  PieChart,
-  Settings2,
-  SquareTerminal,
 } from "lucide-react";
-
-import { NavMain } from "@/components/nav-main";
 import { NavProjects } from "@/components/nav-projects";
 import { NavUser } from "@/components/nav-user";
-import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+import { usePathname } from "next/navigation";
 
-// This is sample data.
-const data = {
-  user: {
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
+  const { open } = useSidebar();
+
+  const user = {
     name: "shadcn",
     email: "m@example.com",
     avatar: "/avatars/shadcn.jpg",
-  },
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
-  projects: [
+  };
+
+  const routes = [
     {
       name: "Dashboard",
       url: "/dashboard",
-      icon: Frame,
+      icon: Home,
+      isActive: pathname === "/dashboard",
     },
     {
       name: "Customers",
       url: "/customers",
-      icon: PieChart,
+      icon: Users,
+      isActive: pathname === "/customers",
+    },
+    {
+      name: "Service History",
+      url: "/service-history",
+      icon: History,
+      isActive: pathname === "/service-history",
+    },
+    {
+      name: "Service Call Log",
+      url: "/service-call-log",
+      icon: ClipboardList,
+      isActive: pathname === "/service-call-log",
+    },
+    {
+      name: "Notifications",
+      url: "/notifications",
+      icon: Bell,
+      isActive: pathname === "/notifications",
     },
     {
       name: "Reports",
       url: "/reports",
       icon: Map,
+      isActive: pathname === "/reports",
     },
-  ],
-  // navMain: [
-  //   {
-  //     title: "Playground",
-  //     url: "#",
-  //     icon: SquareTerminal,
-  //     isActive: true,
-  //     items: [
-  //       {
-  //         title: "History",
-  //         url: "#",
-  //       },
-  //       {
-  //         title: "Starred",
-  //         url: "#",
-  //       },
-  //       {
-  //         title: "Settings",
-  //         url: "#",
-  //       },
-  //     ],
-  //   },
-  //   {
-  //     title: "Models",
-  //     url: "#",
-  //     icon: Bot,
-  //     items: [
-  //       {
-  //         title: "Genesis",
-  //         url: "#",
-  //       },
-  //       {
-  //         title: "Explorer",
-  //         url: "#",
-  //       },
-  //       {
-  //         title: "Quantum",
-  //         url: "#",
-  //       },
-  //     ],
-  //   },
-  //   {
-  //     title: "Documentation",
-  //     url: "#",
-  //     icon: BookOpen,
-  //     items: [
-  //       {
-  //         title: "Introduction",
-  //         url: "#",
-  //       },
-  //       {
-  //         title: "Get Started",
-  //         url: "#",
-  //       },
-  //       {
-  //         title: "Tutorials",
-  //         url: "#",
-  //       },
-  //       {
-  //         title: "Changelog",
-  //         url: "#",
-  //       },
-  //     ],
-  //   },
-  //   {
-  //     title: "Settings",
-  //     url: "#",
-  //     icon: Settings2,
-  //     items: [
-  //       {
-  //         title: "General",
-  //         url: "#",
-  //       },
-  //       {
-  //         title: "Team",
-  //         url: "#",
-  //       },
-  //       {
-  //         title: "Billing",
-  //         url: "#",
-  //       },
-  //       {
-  //         title: "Limits",
-  //         url: "#",
-  //       },
-  //     ],
-  //   },
-  // ],
-};
+    {
+      name: "Settings",
+      url: "/settings",
+      icon: Settings,
+      isActive: pathname === "/settings",
+    },
+  ];
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+      <SidebarHeader className="border-b">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center">
+            <Image
+              src="/images/logo.png"
+              alt="Steer Logo"
+              width={40}
+              height={40}
+            />
+          </div>
+          <div
+            className={cn(
+              open ? "block" : "hidden",
+              "transition-all duration-300 ease-in-out overflow-hidden"
+            )}
+          >
+            <h1 className="text-gray-900">Arunachala</h1>
+            <p className="text-xs text-gray-500">Service Manager</p>
+          </div>
+        </div>
       </SidebarHeader>
       <SidebarContent>
-        <NavProjects projects={data.projects} />
-        {/* <NavMain items={data.navMain} /> */}
+        <NavProjects projects={routes} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
