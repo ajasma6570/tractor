@@ -14,6 +14,9 @@ export async function createCustomer(formData: FormData) {
                 name,
                 email,
                 phone,
+                username: email, // or another unique value
+                password: '1234',
+                role: 'staff', // Set an appropriate role value
             },
         });
 

@@ -1,15 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  Home,
-  Users,
-  History,
-  Bell,
-  Settings,
-  ClipboardList,
-  Map,
-} from "lucide-react";
+import { Home, Users, Bell, PhoneCall } from "lucide-react";
 import { NavProjects } from "@/components/nav-projects";
 import { NavUser } from "@/components/nav-user";
 import {
@@ -48,34 +40,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       isActive: pathname === "/customers",
     },
     {
-      name: "Service History",
-      url: "/service-history",
-      icon: History,
-      isActive: pathname === "/service-history",
-    },
-    {
-      name: "Service Call Log",
-      url: "/service-call-log",
-      icon: ClipboardList,
-      isActive: pathname === "/service-call-log",
+      name: "Call Register",
+      url: "/call-register",
+      icon: PhoneCall,
+      isActive: pathname === "/call-register",
     },
     {
       name: "Notifications",
       url: "/notifications",
       icon: Bell,
       isActive: pathname === "/notifications",
-    },
-    {
-      name: "Reports",
-      url: "/reports",
-      icon: Map,
-      isActive: pathname === "/reports",
-    },
-    {
-      name: "Settings",
-      url: "/settings",
-      icon: Settings,
-      isActive: pathname === "/settings",
     },
   ];
 
