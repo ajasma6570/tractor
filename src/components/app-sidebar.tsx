@@ -57,7 +57,6 @@ export function AppSidebar({ userRole, ...props }: AppSidebarProps) {
     },
   ];
 
-  // Add User Management for admin users
   if (userRole === "admin") {
     routes.push({
       name: "User Management",
