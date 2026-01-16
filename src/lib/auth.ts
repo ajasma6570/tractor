@@ -66,16 +66,13 @@ export const authOptions: NextAuthOptions = {
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
-                // @ts-expect-error: role may not exist on user by default
                 token.role = user.role
             }
             return token;
         },
         async session({ session, token }) {
             if (token) {
-                // @ts-expect-error: session.user may not have id property by default
                 session.user.id = token.id as string;
-                // @ts-expect-error: session.user may not have role property by default
                 session.user.role = token.role as string;
 
                 const encodedToken = await encode({
@@ -84,7 +81,6 @@ export const authOptions: NextAuthOptions = {
                     maxAge: 30 * 24 * 60 * 60, // 30 days
                 });
 
-                // @ts-expect-error: session.user may not have accessToken property by default
                 session.user.accessToken = encodedToken;
             }
             return session;

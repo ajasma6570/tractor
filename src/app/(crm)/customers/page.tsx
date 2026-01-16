@@ -74,17 +74,6 @@ export default function Page() {
 
   const columns = createColumns(handleEdit, handleDelete);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading customers...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full">
       <div className="mb-8 flex justify-center items-center w-full">
@@ -98,7 +87,7 @@ export default function Page() {
       </div>
 
       <div>
-        <DataTable columns={columns} data={data} />
+        <DataTable columns={columns} data={data} isLoading={isLoading} />
       </div>
 
       {/* Edit Modal */}

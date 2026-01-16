@@ -23,6 +23,11 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(new URL('/login', req.url))
     }
 
+    // Role-based protection for /user-management
+    if (pathname.startsWith('/user-management') && token.role !== 'admin') {
+        return NextResponse.redirect(new URL('/dashboard', req.url))
+    }
+
     return NextResponse.next()
 }
 
@@ -33,6 +38,7 @@ export const config = {
         '/customers/:path*',
         '/notifications/:path*',
         '/call-register/:path*',
+        '/user-management/:path*',
         '/login',
     ]
 }

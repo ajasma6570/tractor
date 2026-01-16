@@ -24,11 +24,13 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   searchKey?: string;
   filterKey?: string;
+  isLoading?: boolean;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  isLoading,
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -81,7 +83,19 @@ export function DataTable<TData, TValue>({
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows?.length ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                      <span className="text-muted-foreground">Loading data...</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row, index) => (
                   <TableRow
                     key={row.id}
@@ -106,7 +120,7 @@ export function DataTable<TData, TValue>({
                     colSpan={columns.length}
                     className="h-24 text-center text-muted-foreground"
                   >
-                    No customers found matching your search criteria.
+                    No results found.
                   </TableCell>
                 </TableRow>
               )}

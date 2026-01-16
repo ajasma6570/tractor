@@ -11,7 +11,7 @@ import { useSession } from "next-auth/react";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
-  const userRole = session?.user ? (session.user as any).role : undefined;
+  const userRole = session?.user?.role;
 
   return (
     <SidebarProvider>
