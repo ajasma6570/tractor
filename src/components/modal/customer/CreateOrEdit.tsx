@@ -9,23 +9,53 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { User, Phone, Mail, MapPin, Truck } from "lucide-react";
-import { createCustomerWithVehicle } from "@/app/actions/customer";
+import { createCustomerWithVehicle, updateCustomerWithVehicle } from "@/app/actions/customer";
 import { WarrantyStatus } from "@prisma/client";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
 
-export default function AddCustomer() {
-  const [open, setOpen] = useState(false);
+interface CustomerData {
+  customerId: number;
+  vehicleId: number;
+  name: string;
+  phone: string;
+  email: string | null;
+  address: string;
+  chassisNumber: string;
+  engineNumber: string;
+  model: string;
+  branch: string;
+  hmr: number | null;
+  warrantyStatus: WarrantyStatus;
+  saleDate: Date;
+}
+
+interface CreateOrEditProps {
+  customerData?: CustomerData;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: React.ReactNode;
+}
+
+export default function CreateOrEdit({ customerData, open: controlledOpen, onOpenChange, trigger }: CreateOrEditProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
+  
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? (onOpenChange || (() => {})) : setInternalOpen;
+  
+  const isEditMode = !!customerData;
   
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
     email: "",
     address: "",
-
     chassisNumber: "",
     engineNumber: "",
     model: "",
@@ -34,6 +64,40 @@ export default function AddCustomer() {
     warrantyStatus: "in_warranty" as WarrantyStatus,
     saleDate: "",
   });
+
+  // Prefill form when editing
+  useEffect(() => {
+    if (customerData && open) {
+      setFormData({
+        name: customerData.name,
+        phone: customerData.phone,
+        email: customerData.email || "",
+        address: customerData.address,
+        chassisNumber: customerData.chassisNumber,
+        engineNumber: customerData.engineNumber,
+        model: customerData.model,
+        branch: customerData.branch,
+        hmr: customerData.hmr?.toString() || "",
+        warrantyStatus: customerData.warrantyStatus,
+        saleDate: new Date(customerData.saleDate).toISOString().split('T')[0],
+      });
+    } else if (!open) {
+      // Reset form when dialog closes
+      setFormData({
+        name: "",
+        phone: "",
+        email: "",
+        address: "",
+        chassisNumber: "",
+        engineNumber: "",
+        model: "",
+        branch: "",
+        hmr: "",
+        warrantyStatus: "in_warranty",
+        saleDate: "",
+      });
+    }
+  }, [customerData, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,26 +118,17 @@ export default function AddCustomer() {
         saleDate: new Date(formData.saleDate),
       };
 
-      const result = await createCustomerWithVehicle(payload);
+      const result = isEditMode
+        ? await updateCustomerWithVehicle(
+            customerData!.customerId,
+            customerData!.vehicleId,
+            payload
+          )
+        : await createCustomerWithVehicle(payload);
 
       if (result.success) {
         toast.success(result.message);
-        
-        setFormData({
-          name: "",
-          phone: "",
-          email: "",
-          address: "",
-          chassisNumber: "",
-          engineNumber: "",
-          model: "",
-          branch: "",
-          hmr: "",
-          warrantyStatus: "in_warranty",
-          saleDate: "",
-        });
-        
-
+        queryClient.invalidateQueries({ queryKey: ["customers"] });
         setOpen(false);
       } else {
         toast.error(result.message);
@@ -87,14 +142,17 @@ export default function AddCustomer() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>Add New Customer</Button>
-      </DialogTrigger>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
+      {!trigger && !isControlled && (
+        <DialogTrigger asChild>
+          <Button>Add New Customer</Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="p-4 max-h-[90vh] overflow-y-auto max-w-3xl!">
         <DialogHeader>
-          <DialogTitle>Add New Customer</DialogTitle>
+          <DialogTitle>{isEditMode ? "Edit Customer" : "Add New Customer"}</DialogTitle>
           <DialogDescription>
-            Enter customer and vehicle details
+            {isEditMode ? "Update customer and vehicle details" : "Enter customer and vehicle details"}
           </DialogDescription>
 
           <form onSubmit={handleSubmit} className="pt-6 space-y-6">
@@ -337,7 +395,10 @@ export default function AddCustomer() {
                 disabled={isSubmitting}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? "Adding..." : "Add Customer"}
+                {isSubmitting 
+                  ? (isEditMode ? "Updating..." : "Adding...") 
+                  : (isEditMode ? "Update Customer" : "Add Customer")
+                }
               </button>
             </div>
           </form>

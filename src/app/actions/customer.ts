@@ -88,10 +88,19 @@ export async function getCustomersWithVehicles(): Promise<CustomerTableData[]> {
 
                 return {
                     id: vehicle.id,
+                    customerId: customer.id,
+                    vehicleId: vehicle.id,
                     name: customer.name,
                     chassis: vehicle.chassisNumber,
                     model: vehicle.model,
                     phone: customer.phone,
+                    email: customer.email,
+                    address: customer.address,
+                    engineNumber: vehicle.engineNumber,
+                    branch: vehicle.branch,
+                    hmr: vehicle.hmr,
+                    warrantyStatus: vehicle.warrantyStatus,
+                    saleDate: vehicle.saleDate.toISOString().split('T')[0],
                     lastService: lastServiceDate.toISOString().split('T')[0],
                     nextService: nextServiceDate.toISOString().split('T')[0],
                     status: serviceStatus,
@@ -115,4 +124,88 @@ export async function getCustomers() {
             createdAt: 'desc',
         },
     });
+}
+
+export async function updateCustomerWithVehicle(
+    customerId: number,
+    vehicleId: number,
+    data: CreateCustomerInput
+) {
+    try {
+        const result = await prisma.$transaction(async (tx) => {
+            const customer = await tx.customer.update({
+                where: { id: customerId },
+                data: {
+                    name: data.name,
+                    phone: data.phone,
+                    email: data.email || null,
+                    address: data.address,
+                },
+            });
+
+            const vehicle = await tx.vehicle.update({
+                where: { id: vehicleId },
+                data: {
+                    chassisNumber: data.chassisNumber,
+                    engineNumber: data.engineNumber,
+                    model: data.model,
+                    branch: data.branch,
+                    hmr: data.hmr || null,
+                    warrantyStatus: data.warrantyStatus,
+                    saleDate: data.saleDate,
+                },
+            });
+
+            return { customer, vehicle };
+        });
+
+        revalidatePath('/customers');
+        return {
+            success: true,
+            message: 'Customer and vehicle updated successfully',
+            data: result
+        };
+    } catch (error) {
+        console.error('Error updating customer:', error);
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : 'Failed to update customer and vehicle'
+        };
+    }
+}
+
+export async function getCustomerWithVehicle(customerId: number, vehicleId: number) {
+    try {
+        const customer = await prisma.customer.findUnique({
+            where: { id: customerId },
+            include: {
+                vehicles: {
+                    where: { id: vehicleId },
+                },
+            },
+        });
+
+        if (!customer || customer.vehicles.length === 0) {
+            return {
+                success: false,
+                message: 'Customer or vehicle not found',
+                data: null
+            };
+        }
+
+        return {
+            success: true,
+            data: {
+                customer,
+                vehicle: customer.vehicles[0]
+            }
+        };
+    } catch (error) {
+        console.error('Error fetching customer:', error);
+        return {
+            success: false,
+            message: 'Failed to fetch customer data',
+            data: null
+        };
+    }
 }

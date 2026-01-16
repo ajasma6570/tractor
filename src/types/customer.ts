@@ -25,10 +25,19 @@ export type CreateCustomerInput = {
 
 export type CustomerTableData = {
     id: number;
+    customerId: number;
+    vehicleId: number;
     name: string;
     chassis: string;
     model: string;
     phone: string;
+    email: string | null;
+    address: string;
+    engineNumber: string;
+    branch: string;
+    hmr: number | null;
+    warrantyStatus: WarrantyStatus;
+    saleDate: string;
     lastService: string;
     nextService: string;
     status: ServiceStatus;

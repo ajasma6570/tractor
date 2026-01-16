@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Home, Users, Bell, PhoneCall } from "lucide-react";
+import { Home, Users, Bell, PhoneCall, Settings } from "lucide-react";
 import { NavProjects } from "@/components/nav-projects";
 import { NavUser } from "@/components/nav-user";
 import {
@@ -16,7 +16,11 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  userRole?: string;
+}
+
+export function AppSidebar({ userRole, ...props }: AppSidebarProps) {
   const pathname = usePathname();
   const { open } = useSidebar();
 
@@ -52,6 +56,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       isActive: pathname === "/notifications",
     },
   ];
+
+  // Add User Management for admin users
+  if (userRole === "admin") {
+    routes.push({
+      name: "User Management",
+      url: "/user-management",
+      icon: Settings,
+      isActive: pathname === "/user-management",
+    });
+  }
 
   return (
     <Sidebar collapsible="icon" {...props}>
