@@ -13,7 +13,8 @@ export type TechnicianTableData = Technician;
 
 export function createTechnicianColumns(
   onEdit: (technician: Technician) => void,
-  onDelete: (technician: Technician) => void
+  onDelete: (technician: Technician) => void,
+  onHardDelete: (technician: Technician) => void
 ): ColumnDef<Technician>[] {
   return [
     {
@@ -71,9 +72,15 @@ export function createTechnicianColumns(
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => onDelete(technician)}
-                className="text-red-600"
+                className="text-orange-600"
               >
                 Deactivate
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onHardDelete(technician)}
+                className="text-red-600"
+              >
+                Delete Permanently
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

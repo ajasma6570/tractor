@@ -6,8 +6,8 @@ import { createUserColumns } from "@/components/table/user/user-columns";
 import { createTechnicianColumns } from "@/components/table/technician/technician-columns";
 import CreateOrEditUser from "@/components/modal/user/CreateOrEditUser";
 import CreateOrEditTechnician from "@/components/modal/technician/CreateOrEditTechnician";
-import { getUsers, deleteUser } from "@/app/actions/user";
-import { getTechnicians, deleteTechnician } from "@/app/actions/technician";
+import { getUsers, deleteUser, hardDeleteUser } from "@/app/actions/user";
+import { getTechnicians, deleteTechnician, hardDeleteTechnician } from "@/app/actions/technician";
 import { User, Technician } from "@prisma/client";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
@@ -27,24 +27,6 @@ export default function UserManagementPage() {
   );
   const [technicianModalOpen, setTechnicianModalOpen] = useState(false);
 
-  // Check if user is admin
-  if (status === "loading") {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!session?.user || (session.user as any).role !== "admin") {
-    router.push("/dashboard");
-    toast.error("Access denied. Admin privileges required.");
-    return null;
-  }
-
   // Use TanStack Query for users data
   const {
     data: users = [],
@@ -54,6 +36,7 @@ export default function UserManagementPage() {
     queryKey: ["users"],
     queryFn: getUsers,
     refetchOnWindowFocus: true,
+    enabled: status === "authenticated",
   });
 
   // Use TanStack Query for technicians data
@@ -65,6 +48,7 @@ export default function UserManagementPage() {
     queryKey: ["technicians"],
     queryFn: getTechnicians,
     refetchOnWindowFocus: true,
+    enabled: status === "authenticated",
   });
 
   const handleEditUser = (user: User) => {
@@ -84,6 +68,36 @@ export default function UserManagementPage() {
     }
   };
 
+  const handleHardDeleteUser = async (user: User) => {
+    if (confirm(`Are you sure you want to PERMANENTLY delete user ${user.name}? This action cannot be undone.`)) {
+      const result = await hardDeleteUser(user.id);
+      if (result.success) {
+        toast.success(result.message);
+        refetchUsers();
+      } else {
+        toast.error(result.message);
+      }
+    }
+  };
+
+  // Check if user is admin (moved after hook definitions)
+  if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session?.user || (session.user as any).role !== "admin") {
+    router.push("/dashboard");
+    toast.error("Access denied. Admin privileges required.");
+    return null;
+  }
+
   const handleEditTechnician = (technician: Technician) => {
     setEditingTechnician(technician);
     setTechnicianModalOpen(true);
@@ -92,6 +106,18 @@ export default function UserManagementPage() {
   const handleDeleteTechnician = async (technician: Technician) => {
     if (confirm(`Are you sure you want to deactivate ${technician.name}?`)) {
       const result = await deleteTechnician(technician.id);
+      if (result.success) {
+        toast.success(result.message);
+        refetchTechnicians();
+      } else {
+        toast.error(result.message);
+      }
+    }
+  };
+
+  const handleHardDeleteTechnician = async (technician: Technician) => {
+    if (confirm(`Are you sure you want to PERMANENTLY delete technician ${technician.name}? This action cannot be undone.`)) {
+      const result = await hardDeleteTechnician(technician.id);
       if (result.success) {
         toast.success(result.message);
         refetchTechnicians();
@@ -117,10 +143,11 @@ export default function UserManagementPage() {
     }
   };
 
-  const userColumns = createUserColumns(handleEditUser, handleDeleteUser);
+  const userColumns = createUserColumns(handleEditUser, handleDeleteUser, handleHardDeleteUser);
   const technicianColumns = createTechnicianColumns(
     handleEditTechnician,
-    handleDeleteTechnician
+    handleDeleteTechnician,
+    handleHardDeleteTechnician
   );
 
   return (

@@ -2,6 +2,8 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export type CreateTechnicianInput = {
     name: string;
@@ -67,6 +69,14 @@ export async function updateTechnician(id: number, data: UpdateTechnicianInput) 
 
 export async function deleteTechnician(id: number) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session || (session.user as any).role !== "admin") {
+            return {
+                success: false,
+                message: 'Unauthorized. Admin role required.'
+            };
+        }
+
         await prisma.technician.update({
             where: { id },
             data: { isActive: false },
@@ -85,6 +95,35 @@ export async function deleteTechnician(id: number) {
         };
     }
 }
+
+export async function hardDeleteTechnician(id: number) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session || (session.user as any).role !== "admin") {
+            return {
+                success: false,
+                message: 'Unauthorized. Admin role required.'
+            };
+        }
+
+        await prisma.technician.delete({
+            where: { id },
+        });
+
+        revalidatePath('/user-management');
+        return {
+            success: true,
+            message: 'Technician deleted permanently'
+        };
+    } catch (error) {
+        console.error('Error hard deleting technician:', error);
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : 'Failed to delete technician'
+        };
+    }
+}
+
 
 export async function getTechnicians() {
     try {

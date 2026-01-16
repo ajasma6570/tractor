@@ -3,8 +3,9 @@
 import { DataTable } from "@/components/table/customer/data-table";
 import { createColumns } from "@/components/table/customer/columns";
 import CreateOrEdit from "@/components/modal/customer/CreateOrEdit";
-import { getCustomersWithVehicles } from "@/app/actions/customer";
+import { getCustomersWithVehicles, deleteCustomer } from "@/app/actions/customer";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { CustomerTableData } from "@/types/customer";
 import { WarrantyStatus } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
@@ -52,7 +53,6 @@ export default function Page() {
     });
     setEditModalOpen(true);
   };
-
   const handleEditClose = (open: boolean) => {
     setEditModalOpen(open);
     if (!open) {
@@ -60,8 +60,19 @@ export default function Page() {
       refetch(); // Refetch data after edit
     }
   };
+  const handleDelete = async (customer: CustomerTableData) => {
+    if (confirm(`Are you sure you want to delete ${customer.name} and all their related data (vehicles, services, etc.)?`)) {
+      const result = await deleteCustomer(customer.customerId);
+      if (result.success) {
+        toast.success(result.message);
+        refetch();
+      } else {
+        toast.error(result.message);
+      }
+    }
+  };
 
-  const columns = createColumns(handleEdit);
+  const columns = createColumns(handleEdit, handleDelete);
 
   if (isLoading) {
     return (

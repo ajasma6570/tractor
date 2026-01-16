@@ -31,7 +31,10 @@ export type Customer = {
 };
 
 
-export function createColumns(onEdit: (customer: Customer) => void): ColumnDef<Customer>[] {
+export function createColumns(
+  onEdit: (customer: Customer) => void,
+  onDelete: (customer: Customer) => void
+): ColumnDef<Customer>[] {
   return [
     {
       accessorKey: "name",
@@ -105,6 +108,12 @@ export function createColumns(onEdit: (customer: Customer) => void): ColumnDef<C
                 onClick={() => console.log("Schedule", customer.id)}
               >
                 Schedule Service
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onDelete(customer)}
+                className="text-red-600"
+              >
+                Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

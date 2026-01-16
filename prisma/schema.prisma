@@ -100,7 +100,7 @@ model Vehicle {
   serviceStatus   ServiceStatus  @default(up_to_date)
   createdAt       DateTime       @default(now())
 
-  customer  Customer          @relation(fields: [customerId], references: [id])
+  customer  Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
   schedules ServiceSchedule[]
   services  ServiceRecord[]
   calls     CallRegister[]
@@ -117,9 +117,9 @@ model ServiceSchedule {
   status       BookingStatus
   createdAt    DateTime      @default(now())
 
-  vehicle    Vehicle     @relation(fields: [vehicleId], references: [id])
-  customer   Customer    @relation(fields: [customerId], references: [id])
-  technician Technician? @relation(fields: [technicianId], references: [id])
+  vehicle    Vehicle     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  customer   Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  technician Technician? @relation(fields: [technicianId], references: [id], onDelete: SetNull)
 }
 
 model ServiceRecord {
@@ -134,9 +134,9 @@ model ServiceRecord {
   serviceDate      DateTime
   createdAt        DateTime         @default(now())
 
-  vehicle    Vehicle     @relation(fields: [vehicleId], references: [id])
-  customer   Customer    @relation(fields: [customerId], references: [id])
-  technician Technician? @relation(fields: [technicianId], references: [id])
+  vehicle    Vehicle     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  customer   Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  technician Technician? @relation(fields: [technicianId], references: [id], onDelete: SetNull)
 }
 
 model CallRegister {
@@ -150,7 +150,7 @@ model CallRegister {
   remarks       String?
   calledById    Int
 
-  calledBy User     @relation("UserCalls", fields: [calledById], references: [id])
-  vehicle  Vehicle  @relation(fields: [vehicleId], references: [id])
-  customer Customer @relation(fields: [customerId], references: [id])
+  calledBy User     @relation("UserCalls", fields: [calledById], references: [id], onDelete: Cascade)
+  vehicle  Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 }

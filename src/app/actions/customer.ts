@@ -209,3 +209,23 @@ export async function getCustomerWithVehicle(customerId: number, vehicleId: numb
         };
     }
 }
+
+export async function deleteCustomer(id: number) {
+    try {
+        await prisma.customer.delete({
+            where: { id },
+        });
+
+        revalidatePath('/customers');
+        return {
+            success: true,
+            message: 'Customer and related data deleted successfully'
+        };
+    } catch (error) {
+        console.error('Error deleting customer:', error);
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : 'Failed to delete customer'
+        };
+    }
+}

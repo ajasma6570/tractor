@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcrypt";
 import { UserRole } from "@prisma/client";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export type CreateUserInput = {
     name: string;
@@ -90,6 +92,14 @@ export async function updateUser(id: number, data: UpdateUserInput) {
 
 export async function deleteUser(id: number) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session || (session.user as any).role !== "admin") {
+            return {
+                success: false,
+                message: 'Unauthorized. Admin role required.'
+            };
+        }
+
         await prisma.user.update({
             where: { id },
             data: { isActive: false },
@@ -108,6 +118,35 @@ export async function deleteUser(id: number) {
         };
     }
 }
+
+export async function hardDeleteUser(id: number) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session || (session.user as any).role !== "admin") {
+            return {
+                success: false,
+                message: 'Unauthorized. Admin role required.'
+            };
+        }
+
+        await prisma.user.delete({
+            where: { id },
+        });
+
+        revalidatePath('/user-management');
+        return {
+            success: true,
+            message: 'User deleted permanently'
+        };
+    } catch (error) {
+        console.error('Error hard deleting user:', error);
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : 'Failed to delete user'
+        };
+    }
+}
+
 
 export async function getUsers() {
     try {

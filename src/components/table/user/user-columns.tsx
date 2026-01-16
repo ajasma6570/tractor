@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { User, UserRole } from "@prisma/client";
 
 export type UserTableData = User;
-
+   
 function getRoleBadge(role: UserRole) {
   switch (role) {
     case "admin":
@@ -35,7 +35,8 @@ function getRoleLabel(role: UserRole) {
 
 export function createUserColumns(
   onEdit: (user: User) => void,
-  onDelete: (user: User) => void
+  onDelete: (user: User) => void,
+  onHardDelete: (user: User) => void,
 ): ColumnDef<User>[] {
   return [
     {
@@ -112,12 +113,22 @@ export function createUserColumns(
               <DropdownMenuItem onClick={() => onEdit(user)}>
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => onDelete(user)}
-                className="text-red-600"
-              >
-                Deactivate
-              </DropdownMenuItem>
+              {user.role !== "admin" && (
+                <>
+                  <DropdownMenuItem
+                    onClick={() => onDelete(user)}
+                    className="text-orange-600"
+                  >
+                    Deactivate
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => onHardDelete(user)}
+                    className="text-red-600"
+                  >
+                    Delete Permanently
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         );
