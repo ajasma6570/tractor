@@ -26,5 +26,7 @@ export function useCustomers() {
     return useQuery({
         queryKey: ["customers"],
         queryFn: getCustomers,
+        refetchOnMount: true,
+        refetchOnWindowFocus: true,
     });
 }
