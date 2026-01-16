@@ -12,13 +12,16 @@ import {
 import { MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Eye, Pencil, Calendar } from "lucide-react";
+import { ServiceStatus } from "@prisma/client";
 
-function getStatusBadge(status: string) {
+function getStatusBadge(status: ServiceStatus) {
   switch (status) {
-    case "up-to-date":
+    case "up_to_date":
       return "bg-green-100 text-green-700";
-    case "expire-soon":
+    case "expire_7_days":
       return "bg-yellow-100 text-yellow-700";
+    case "expire_3_days":
+      return "bg-orange-100 text-orange-700";
     case "expired":
       return "bg-red-100 text-red-700";
     default:
@@ -26,12 +29,14 @@ function getStatusBadge(status: string) {
   }
 }
 
-function getStatusLabel(status: string) {
+function getStatusLabel(status: ServiceStatus) {
   switch (status) {
-    case "up-to-date":
+    case "up_to_date":
       return "Up to Date";
-    case "expire-soon":
-      return "Expire Soon";
+    case "expire_7_days":
+      return "Expires in 7 Days";
+    case "expire_3_days":
+      return "Expires in 3 Days";
     case "expired":
       return "Expired";
     default:
@@ -47,7 +52,7 @@ export type Customer = {
   phone: string;
   lastService: string;
   nextService: string;
-  status: "up-to-date" | "expire-soon" | "expired";
+  status: ServiceStatus;
 };
 
 export const columns: ColumnDef<Customer>[] = [
@@ -87,7 +92,7 @@ export const columns: ColumnDef<Customer>[] = [
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const status = row.getValue("status") as string;
+      const status = row.getValue("status") as ServiceStatus;
       return (
         <span
           className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadge(

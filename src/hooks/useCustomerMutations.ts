@@ -1,19 +1,14 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createCustomer, getCustomers } from "@/app/actions/customer";
+import { createCustomerWithVehicle, getCustomers } from "@/app/actions/customer";
+import { CreateCustomerInput } from "@/types/customer";
 
 export function useCreateCustomer() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (data: { name: string; email: string; phone: string }) => {
-            const formDataObj = new FormData();
-            formDataObj.append("name", data.name);
-            formDataObj.append("email", data.email);
-            formDataObj.append("phone", data.phone);
-            return createCustomer(formDataObj);
-        },
+        mutationFn: (data: CreateCustomerInput) => createCustomerWithVehicle(data),
         onSuccess: (result) => {
             if (result.success) {
                 queryClient.invalidateQueries({ queryKey: ["customers"] });

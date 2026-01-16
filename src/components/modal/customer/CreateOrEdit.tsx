@@ -11,43 +11,84 @@ import {
 
 import React, { useState } from "react";
 import { User, Phone, Mail, MapPin, Truck } from "lucide-react";
-import { Button } from "../ui/button";
+import { createCustomerWithVehicle } from "@/app/actions/customer";
+import { WarrantyStatus } from "@prisma/client";
+import toast from "react-hot-toast";
+import { Button } from "@/components/ui/button";
 
 export default function AddCustomer() {
+  const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const [formData, setFormData] = useState({
-    // Customer fields
     name: "",
     phone: "",
     email: "",
     address: "",
 
-    // Vehicle fields
     chassisNumber: "",
     engineNumber: "",
     model: "",
     branch: "",
     hmr: "",
-    warrantyStatus: "ACTIVE",
+    warrantyStatus: "in_warranty" as WarrantyStatus,
     saleDate: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    // Convert hmr to number
-    const payload = {
-      ...formData,
-      hmr: formData.hmr ? parseInt(formData.hmr) : null,
-    };
+    try {
+      const payload = {
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email || undefined,
+        address: formData.address,
+        chassisNumber: formData.chassisNumber,
+        engineNumber: formData.engineNumber,
+        model: formData.model,
+        branch: formData.branch,
+        hmr: formData.hmr ? parseInt(formData.hmr) : undefined,
+        warrantyStatus: formData.warrantyStatus,
+        saleDate: new Date(formData.saleDate),
+      };
 
-    console.log("Form submitted:", payload);
-    // Add your API call here
+      const result = await createCustomerWithVehicle(payload);
+
+      if (result.success) {
+        toast.success(result.message);
+        
+        setFormData({
+          name: "",
+          phone: "",
+          email: "",
+          address: "",
+          chassisNumber: "",
+          engineNumber: "",
+          model: "",
+          branch: "",
+          hmr: "",
+          warrantyStatus: "in_warranty",
+          saleDate: "",
+        });
+        
+
+        setOpen(false);
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <Dialog>
-      <DialogTrigger className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg font-medium whitespace-nowrap">
-        Add New Customer
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>Add New Customer</Button>
       </DialogTrigger>
       <DialogContent className="p-4 max-h-[90vh] overflow-y-auto max-w-3xl!">
         <DialogHeader>
@@ -261,14 +302,13 @@ export default function AddCustomer() {
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        warrantyStatus: e.target.value,
+                        warrantyStatus: e.target.value as WarrantyStatus,
                       })
                     }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="ACTIVE">Active</option>
-                    <option value="EXPIRED">Expired</option>
-                    <option value="VOID">Void</option>
+                    <option value="in_warranty">In Warranty</option>
+                    <option value="out_warranty">Out of Warranty</option>
                   </select>
                 </div>
                 <div className="md:col-span-2">
@@ -294,9 +334,10 @@ export default function AddCustomer() {
             <div className="flex items-center justify-center sm:justify-end gap-3 pt-4">
               <button
                 type="submit"
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                disabled={isSubmitting}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Add Customer
+                {isSubmitting ? "Adding..." : "Add Customer"}
               </button>
             </div>
           </form>
