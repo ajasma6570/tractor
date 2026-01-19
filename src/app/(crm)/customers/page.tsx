@@ -3,7 +3,10 @@
 import { DataTable } from "@/components/table/customer/data-table";
 import { createColumns } from "@/components/table/customer/columns";
 import CreateOrEdit from "@/components/modal/customer/CreateOrEdit";
-import { getCustomersWithVehicles, deleteCustomer } from "@/app/actions/customer";
+import {
+  getCustomersWithVehicles,
+  deleteCustomer,
+} from "@/app/actions/customer";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { CustomerTableData } from "@/types/customer";
@@ -26,10 +29,14 @@ export default function Page() {
     warrantyStatus: WarrantyStatus;
     saleDate: Date;
   } | null>(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
 
-  // Use TanStack Query for data fetching
-  const { data = [], isLoading, refetch } = useQuery({
+  const {
+    data = [],
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["customers"],
     queryFn: getCustomersWithVehicles,
     refetchOnWindowFocus: true,
@@ -61,7 +68,11 @@ export default function Page() {
     }
   };
   const handleDelete = async (customer: CustomerTableData) => {
-    if (confirm(`Are you sure you want to delete ${customer.name} and all their related data (vehicles, services, etc.)?`)) {
+    if (
+      confirm(
+        `Are you sure you want to delete ${customer.name} and all their related data (vehicles, services, etc.)?`,
+      )
+    ) {
       const result = await deleteCustomer(customer.customerId);
       if (result.success) {
         toast.success(result.message);
@@ -83,7 +94,10 @@ export default function Page() {
             Manage customer information and service schedules
           </p>
         </div>
-        <CreateOrEdit />
+        <CreateOrEdit
+          open={createModalOpen}
+          onOpenChange={setCreateModalOpen}
+        />
       </div>
 
       <div>

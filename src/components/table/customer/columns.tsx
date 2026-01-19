@@ -9,6 +9,7 @@ import { MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ServiceStatus, WarrantyStatus } from "@prisma/client";
 import { getStatusBadgeClass, getStatusLabel } from "@/lib/serviceStatus";
+import { format } from "date-fns";
 
 export type Customer = {
   id: number;
@@ -30,10 +31,9 @@ export type Customer = {
   status: ServiceStatus;
 };
 
-
 export function createColumns(
   onEdit: (customer: Customer) => void,
-  onDelete: (customer: Customer) => void
+  onDelete: (customer: Customer) => void,
 ): ColumnDef<Customer>[] {
   return [
     {
@@ -63,10 +63,26 @@ export function createColumns(
     {
       accessorKey: "lastService",
       header: "Last Service",
+      cell: ({ row }) => (
+        <div>
+          {format(
+            new Date(row.getValue("lastService") as string),
+            "dd-MM-yyyy",
+          )}
+        </div>
+      ),
     },
     {
       accessorKey: "nextService",
       header: "Next Service",
+      cell: ({ row }) => (
+        <div>
+          {format(
+            new Date(row.getValue("nextService") as string),
+            "dd-MM-yyyy",
+          )}
+        </div>
+      ),
     },
     {
       accessorKey: "status",
@@ -76,7 +92,7 @@ export function createColumns(
         return (
           <span
             className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadgeClass(
-              status
+              status,
             )}`}
           >
             {getStatusLabel(status)}
@@ -98,7 +114,9 @@ export function createColumns(
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => console.log("View", customer.id)}>
+              <DropdownMenuItem
+                onClick={() => console.log("View", customer.id)}
+              >
                 View
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onEdit(customer)}>

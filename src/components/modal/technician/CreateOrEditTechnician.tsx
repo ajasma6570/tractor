@@ -11,13 +11,12 @@ import {
 
 import React, { useState, useEffect } from "react";
 import { User, Phone, MapPin } from "lucide-react";
-import {
-  createTechnician,
-  updateTechnician,
-} from "@/app/actions/technician";
+import { createTechnician, updateTechnician } from "@/app/actions/technician";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
+import { FormInput } from "@/components/custom/Form/form-input";
+import { FormSwitch } from "@/components/custom/Form/form-switch";
 
 interface TechnicianData {
   id: number;
@@ -98,7 +97,7 @@ export default function CreateOrEditTechnician({
       } else {
         toast.error(result.message);
       }
-    } catch (error) {
+    } catch {
       toast.error("An unexpected error occurred");
     } finally {
       setIsSubmitting(false);
@@ -125,78 +124,50 @@ export default function CreateOrEditTechnician({
           </DialogDescription>
 
           <form onSubmit={handleSubmit} className="pt-6 space-y-4">
-            <div>
-              <label className="block text-sm text-left font-medium text-gray-700 mb-2">
-                Full Name <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  placeholder="Enter full name"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
+            <FormInput
+              label="Full Name"
+              type="text"
+              id="name"
+              required
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              placeholder="Enter full name"
+            />
 
-            <div>
-              <label className="block text-sm text-left font-medium text-gray-700 mb-2">
-                Phone Number <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="tel"
-                  required
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                  placeholder="+91 98765 43210"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
+            <FormInput
+              label="Phone Number"
+              type="text"
+              id="phone"
+              required
+              value={formData.phone}
+              onChange={(e) =>
+                setFormData({ ...formData, phone: e.target.value })
+              }
+              placeholder="Enter phone number"
+            />
 
-            <div>
-              <label className="block text-left text-sm font-medium text-gray-700 mb-2">
-                Branch <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  required
-                  value={formData.branch}
-                  onChange={(e) =>
-                    setFormData({ ...formData, branch: e.target.value })
-                  }
-                  placeholder="e.g., Karur, Chennai"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
+            <FormInput
+              label="Branch"
+              type="text"
+              id="branch"
+              required
+              value={formData.branch}
+              onChange={(e) =>
+                setFormData({ ...formData, branch: e.target.value })
+              }
+              placeholder="Enter branch"
+            />
 
-            <div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.isActive}
-                  onChange={(e) =>
-                    setFormData({ ...formData, isActive: e.target.checked })
-                  }
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm font-medium text-gray-700">
-                  Active Technician
-                </span>
-              </label>
-            </div>
+            <FormSwitch
+              id="active-technician"
+              label="  Active Technician"
+              checked={formData.isActive}
+              onCheckedChange={(checked) =>
+                setFormData({ ...formData, isActive: checked })
+              }
+            />
 
             <div className="flex items-center justify-end gap-3 pt-4">
               <button
@@ -209,8 +180,8 @@ export default function CreateOrEditTechnician({
                     ? "Updating..."
                     : "Creating..."
                   : isEditMode
-                  ? "Update Technician"
-                  : "Create Technician"}
+                    ? "Update Technician"
+                    : "Create Technician"}
               </button>
             </div>
           </form>

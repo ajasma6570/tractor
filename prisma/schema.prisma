@@ -90,7 +90,7 @@ model Vehicle {
   id              Int            @id @default(autoincrement())
   customerId      Int
   chassisNumber   String         @unique
-  engineNumber    String
+  engineNumber    String         @unique
   model           String
   branch          String
   hmr             Int?

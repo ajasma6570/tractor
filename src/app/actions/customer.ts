@@ -18,6 +18,7 @@ export async function createCustomerWithVehicle(data: CreateCustomerInput) {
                 },
             });
 
+
             const vehicle = await tx.vehicle.create({
                 data: {
                     customerId: customer.id,
@@ -33,8 +34,10 @@ export async function createCustomerWithVehicle(data: CreateCustomerInput) {
                 },
             });
 
+
             return { customer, vehicle };
         });
+
 
         revalidatePath('/customers');
         return {
@@ -143,6 +146,7 @@ export async function updateCustomerWithVehicle(
                 },
             });
 
+
             const vehicle = await tx.vehicle.update({
                 where: { id: vehicleId },
                 data: {
@@ -156,8 +160,10 @@ export async function updateCustomerWithVehicle(
                 },
             });
 
+
             return { customer, vehicle };
         });
+
 
         revalidatePath('/customers');
         return {

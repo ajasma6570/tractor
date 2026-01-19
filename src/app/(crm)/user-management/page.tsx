@@ -7,7 +7,11 @@ import { createTechnicianColumns } from "@/components/table/technician/technicia
 import CreateOrEditUser from "@/components/modal/user/CreateOrEditUser";
 import CreateOrEditTechnician from "@/components/modal/technician/CreateOrEditTechnician";
 import { getUsers, deleteUser, hardDeleteUser } from "@/app/actions/user";
-import { getTechnicians, deleteTechnician, hardDeleteTechnician } from "@/app/actions/technician";
+import {
+  getTechnicians,
+  deleteTechnician,
+  hardDeleteTechnician,
+} from "@/app/actions/technician";
 import { User, Technician } from "@prisma/client";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
@@ -23,7 +27,7 @@ export default function UserManagementPage() {
   const [userModalOpen, setUserModalOpen] = useState(false);
 
   const [editingTechnician, setEditingTechnician] = useState<Technician | null>(
-    null
+    null,
   );
   const [technicianModalOpen, setTechnicianModalOpen] = useState(false);
 
@@ -69,7 +73,11 @@ export default function UserManagementPage() {
   };
 
   const handleHardDeleteUser = async (user: User) => {
-    if (confirm(`Are you sure you want to PERMANENTLY delete user ${user.name}? This action cannot be undone.`)) {
+    if (
+      confirm(
+        `Are you sure you want to PERMANENTLY delete user ${user.name}? This action cannot be undone.`,
+      )
+    ) {
       const result = await hardDeleteUser(user.id);
       if (result.success) {
         toast.success(result.message);
@@ -79,8 +87,6 @@ export default function UserManagementPage() {
       }
     }
   };
-
-  // No manual auth check here - handled by middleware
 
   const handleEditTechnician = (technician: Technician) => {
     setEditingTechnician(technician);
@@ -100,7 +106,11 @@ export default function UserManagementPage() {
   };
 
   const handleHardDeleteTechnician = async (technician: Technician) => {
-    if (confirm(`Are you sure you want to PERMANENTLY delete technician ${technician.name}? This action cannot be undone.`)) {
+    if (
+      confirm(
+        `Are you sure you want to PERMANENTLY delete technician ${technician.name}? This action cannot be undone.`,
+      )
+    ) {
       const result = await hardDeleteTechnician(technician.id);
       if (result.success) {
         toast.success(result.message);
@@ -127,11 +137,15 @@ export default function UserManagementPage() {
     }
   };
 
-  const userColumns = createUserColumns(handleEditUser, handleDeleteUser, handleHardDeleteUser);
+  const userColumns = createUserColumns(
+    handleEditUser,
+    handleDeleteUser,
+    handleHardDeleteUser,
+  );
   const technicianColumns = createTechnicianColumns(
     handleEditTechnician,
     handleDeleteTechnician,
-    handleHardDeleteTechnician
+    handleHardDeleteTechnician,
   );
 
   return (
@@ -175,8 +189,12 @@ export default function UserManagementPage() {
           <div className="mb-4 flex justify-end">
             <CreateOrEditUser />
           </div>
-          <DataTable columns={userColumns} data={users} isLoading={usersLoading} />
-          
+          <DataTable
+            columns={userColumns}
+            data={users}
+            isLoading={usersLoading}
+          />
+
           {/* Edit User Modal */}
           {editingUser && (
             <CreateOrEditUser
@@ -194,8 +212,12 @@ export default function UserManagementPage() {
           <div className="mb-4 flex justify-end">
             <CreateOrEditTechnician />
           </div>
-          <DataTable columns={technicianColumns} data={technicians} isLoading={techniciansLoading} />
-          
+          <DataTable
+            columns={technicianColumns}
+            data={technicians}
+            isLoading={techniciansLoading}
+          />
+
           {/* Edit Technician Modal */}
           {editingTechnician && (
             <CreateOrEditTechnician

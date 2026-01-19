@@ -42,3 +42,5 @@ export type CustomerTableData = {
     nextService: string;
     status: ServiceStatus;
 };
+
+

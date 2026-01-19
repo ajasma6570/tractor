@@ -10,12 +10,14 @@ import {
 } from "@/components/ui/dialog";
 
 import React, { useState, useEffect } from "react";
-import { User, Mail, Phone, Lock, Shield } from "lucide-react";
 import { createUser, updateUser } from "@/app/actions/user";
 import { UserRole } from "@prisma/client";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
+import { FormInput } from "@/components/custom/Form/form-input";
+import { FormSelect } from "@/components/custom/Form/form-select";
+import { FormSwitch } from "@/components/custom/Form/form-switch";
 
 interface UserData {
   id: number;
@@ -113,12 +115,17 @@ export default function CreateOrEditUser({
       } else {
         toast.error(result.message);
       }
-    } catch (error) {
+    } catch {
       toast.error("An unexpected error occurred");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const roleOptions = [
+    { value: "staff", label: "Staff" },
+    { value: "admin", label: "Admin" },
+  ];
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -130,9 +137,7 @@ export default function CreateOrEditUser({
       )}
       <DialogContent className="p-4 max-h-[90vh] overflow-y-auto max-w-2xl">
         <DialogHeader>
-          <DialogTitle>
-            {isEditMode ? "Edit User" : "Add New User"}
-          </DialogTitle>
+          <DialogTitle>{isEditMode ? "Edit User" : "Add New User"}</DialogTitle>
           <DialogDescription>
             {isEditMode
               ? "Update user details and permissions"
@@ -141,141 +146,87 @@ export default function CreateOrEditUser({
 
           <form onSubmit={handleSubmit} className="pt-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm text-left font-medium text-gray-700 mb-2">
-                  Full Name <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    placeholder="Enter full name"
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
+              <FormInput
+                label="Full Name"
+                id="name"
+                required
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                placeholder="Enter full name"
+              />
 
-              <div>
-                <label className="block text-sm text-left font-medium text-gray-700 mb-2">
-                  Username <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.username}
-                  onChange={(e) =>
-                    setFormData({ ...formData, username: e.target.value })
-                  }
-                  placeholder="Enter username"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
-                />
-              </div>
+              <FormInput
+                label="Username"
+                id="username"
+                required
+                value={formData.username}
+                onChange={(e) =>
+                  setFormData({ ...formData, username: e.target.value })
+                }
+                placeholder="Enter username"
+              />
 
-              <div>
-                <label className="block text-left text-sm font-medium text-gray-700 mb-2">
-                  Email Address <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    placeholder="user@example.com"
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
+              <FormInput
+                label="Email Address"
+                type="email"
+                id="email"
+                required
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+                placeholder="Enter email address"
+              />
 
-              <div>
-                <label className="block text-sm text-left font-medium text-gray-700 mb-2">
-                  Phone Number
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
-                    placeholder="+91 98765 43210"
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
+              <FormInput
+                label="Phone Number"
+                type="tel"
+                id="phone"
+                required
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
+                placeholder="Enter phone number"
+              />
 
-              <div>
-                <label className="block text-sm text-left font-medium text-gray-700 mb-2">
-                  Password{" "}
-                  {!isEditMode && <span className="text-red-500">*</span>}
-                  {isEditMode && (
-                    <span className="text-gray-500 text-xs">
-                      (leave blank to keep current)
-                    </span>
-                  )}
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="password"
-                    required={!isEditMode}
-                    value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                    placeholder={isEditMode ? "••••••••" : "Enter password"}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
+              <FormInput
+                label="Password"
+                type="password"
+                id="password"
+                required
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
+                placeholder="Enter password"
+              />
 
-              <div>
-                <label className="block text-left text-sm font-medium text-gray-700 mb-2">
-                  Role <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <select
-                    required
-                    value={formData.role}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        role: e.target.value as UserRole,
-                      })
-                    }
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="staff">Staff</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-              </div>
+              <FormSelect
+                label="Role"
+                id="role"
+                value={formData.role}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    role: value as UserRole,
+                  })
+                }
+                options={roleOptions}
+                placeholder="Select a role"
+                required
+              />
 
-              <div className="md:col-span-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.isActive}
-                    onChange={(e) =>
-                      setFormData({ ...formData, isActive: e.target.checked })
-                    }
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700">
-                    Active User
-                  </span>
-                </label>
-              </div>
+              <FormSwitch
+                id="active-user"
+                label="Active User"
+                checked={formData.isActive}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, isActive: checked })
+                }
+              />
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-4">
@@ -289,8 +240,8 @@ export default function CreateOrEditUser({
                     ? "Updating..."
                     : "Creating..."
                   : isEditMode
-                  ? "Update User"
-                  : "Create User"}
+                    ? "Update User"
+                    : "Create User"}
               </button>
             </div>
           </form>
