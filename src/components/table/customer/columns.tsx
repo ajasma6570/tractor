@@ -9,17 +9,32 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
 import { CustomerTableData } from "@/types/models";
+import { ReminderStatus } from "@prisma/client";
+import { StatusBadge } from "@/components/custom/Badge";
 
-function getStatusUI(status: string) {
+export function getStatusBadge(status: ReminderStatus) {
   switch (status) {
     case "expired":
-      return { label: "Expired", color: "bg-red-500" };
+      return (
+        <StatusBadge color="red" value="Expired" title="Service expired" />
+      );
+
     case "expire_3_days":
-      return { label: "3 Days", color: "bg-orange-500" };
+      return (
+        <StatusBadge color="yellow" value="3 Days" title="Due in 3 days" />
+      );
+
     case "expire_7_days":
-      return { label: "7 Days", color: "bg-yellow-500" };
+      return <StatusBadge color="blue" value="7 Days" title="Due in 7 days" />;
+
     default:
-      return { label: "OK", color: "bg-green-500" };
+      return (
+        <StatusBadge
+          color="green"
+          value="Up to Date"
+          title="Service up to date"
+        />
+      );
   }
 }
 
@@ -32,67 +47,68 @@ export function createCustomerColumns(
       accessorKey: "name",
       header: "Customer",
     },
-
+    {
+      accessorKey: "chassis",
+      header: "Chassis Number",
+    },
     {
       accessorKey: "phone",
       header: "Phone",
     },
-
     {
-      accessorKey: "chassis",
-      header: "Vehicle",
+      accessorKey: "model",
+      header: "Model",
     },
+    {
+      accessorKey: "warrantyStatus",
+      header: "Warranty Status",
+      cell: ({ row }) => {
+        const status = row.getValue("warrantyStatus") as string;
 
+        return status === "in_warranty" ? (
+          <StatusBadge color="green" value="In Warranty" />
+        ) : (
+          <StatusBadge color="default" value="Out of Warranty" />
+        );
+      },
+    },
     {
       header: "Engine Oil",
       cell: ({ row }) => {
         const status = row.original.engineStatus;
         const next = row.original.engineNext;
-        const ui = getStatusUI(status);
 
         return (
           <div className="space-y-1">
-            <span
-              className={`text-white text-xs px-2 py-1 rounded ${ui.color}`}
-            >
-              {ui.label}
-            </span>
-
+            {getStatusBadge(status)}
             {next && (
-              <div className="text-xs text-muted-foreground">
-                Due: {format(new Date(next), "dd MMM")}
-              </div>
+              <p className="text-sm  font-medium">
+                Next: {format(new Date(next), "dd-MM-yyyy")}
+              </p>
             )}
           </div>
         );
       },
     },
-
     {
       header: "Transmission",
       cell: ({ row }) => {
         const status = row.original.transmissionStatus;
         const next = row.original.transmissionNext;
-        const ui = getStatusUI(status);
 
         return (
           <div className="space-y-1">
-            <span
-              className={`text-white text-xs px-2 py-1 rounded ${ui.color}`}
-            >
-              {ui.label}
-            </span>
+            {getStatusBadge(status)}
 
             {next && (
-              <div className="text-xs text-muted-foreground">
-                Due: {format(new Date(next), "dd MMM")}
-              </div>
+              <p className="text-sm  font-medium">
+                Next: {format(new Date(next), "dd-MM-yyyy")}
+              </p>
             )}
           </div>
         );
       },
     },
-
     {
       id: "actions",
       cell: ({ row }) => {

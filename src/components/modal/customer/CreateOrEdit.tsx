@@ -124,10 +124,8 @@ export default function CreateOrEdit({
 
   const warrantyOptions = [
     { value: "in_warranty", label: "In Warranty" },
-    { value: "out_warranty", label: "Out of Warranty" },
+    { value: "out_of_warranty", label: "Out of Warranty" },
   ];
-
-  console.log("customerData", customerData);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

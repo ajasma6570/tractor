@@ -220,6 +220,7 @@ export async function updateCustomerWithVehicle(
     }
 ) {
 
+
     try {
         const result = await prisma.$transaction(async (tx) => {
 
@@ -250,6 +251,7 @@ export async function updateCustomerWithVehicle(
         })
 
         revalidatePath("/customers")
+
 
         return {
             success: true,

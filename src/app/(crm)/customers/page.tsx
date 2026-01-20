@@ -75,8 +75,6 @@ export default function Page() {
     }
   };
 
-  const columns = createCustomerColumns(handleEdit, handleDelete);
-
   return (
     <div className="w-full">
       <div className="mb-8 flex justify-center items-center w-full">
@@ -93,7 +91,11 @@ export default function Page() {
       </div>
 
       <div>
-        <DataTable columns={columns} data={data} isLoading={isLoading} />
+        <DataTable
+          columns={createCustomerColumns(handleEdit, handleDelete)}
+          data={data}
+          isLoading={isLoading}
+        />
       </div>
 
       {/* Edit Modal */}
