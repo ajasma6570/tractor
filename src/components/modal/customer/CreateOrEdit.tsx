@@ -24,25 +24,10 @@ import { FormInput } from "@/components/custom/Form/form-input";
 import { FormSelect } from "@/components/custom/Form/form-select";
 import { Separator } from "@/components/ui/separator";
 import { FormDatePicker } from "@/components/custom/Form/form-date-picker";
-
-interface CustomerData {
-  customerId: number;
-  vehicleId: number;
-  name: string;
-  phone: string;
-  email: string | null;
-  address: string;
-  chassisNumber: string;
-  engineNumber: string;
-  model: string;
-  branch: string;
-  hmr: number | null;
-  warrantyStatus: WarrantyStatus;
-  saleDate: Date;
-}
+import { EditCustomerForm } from "@/types/models";
 
 interface CreateOrEditProps {
-  customerData?: CustomerData;
+  customerData?: EditCustomerForm;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   trigger?: React.ReactNode;

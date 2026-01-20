@@ -1,14 +1,37 @@
 'use server'
 
-import prisma from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
-import { CreateCustomerInput, CustomerTableData } from "@/types/customer";
-import { calculateVehicleServiceStatus, getNextServiceDate } from "@/lib/serviceStatus";
-import { ServiceType } from "@prisma/client";
+import prisma from "@/lib/prisma"
+import { revalidatePath } from "next/cache"
+import { addMonths, addYears } from "date-fns"
+import { CustomerTableData } from "@/types/models"
 
-export async function createCustomerWithVehicle(data: CreateCustomerInput) {
+
+function getEngineNext(date: Date) {
+    return addMonths(date, 3)
+}
+
+function getTransmissionNext(date: Date) {
+    return addYears(date, 1)
+}
+
+export async function createCustomerWithVehicle(data: {
+    name: string
+    phone: string
+    email?: string
+    address: string
+
+    chassisNumber: string
+    engineNumber: string
+    model: string
+    branch: string
+    hmr?: number
+    warrantyStatus: "in_warranty" | "out_of_warranty"
+    saleDate: Date
+}) {
+
     try {
         const result = await prisma.$transaction(async (tx) => {
+
             const customer = await tx.customer.create({
                 data: {
                     name: data.name,
@@ -16,8 +39,7 @@ export async function createCustomerWithVehicle(data: CreateCustomerInput) {
                     email: data.email || null,
                     address: data.address,
                 },
-            });
-
+            })
 
             const vehicle = await tx.vehicle.create({
                 data: {
@@ -29,113 +51,178 @@ export async function createCustomerWithVehicle(data: CreateCustomerInput) {
                     hmr: data.hmr || null,
                     warrantyStatus: data.warrantyStatus,
                     saleDate: data.saleDate,
-                    lastServiceDate: null,
-                    serviceStatus: "up_to_date",
                 },
-            });
+            })
 
+            /* AUTO CREATE REMINDERS */
 
-            return { customer, vehicle };
-        });
+            await tx.serviceReminder.createMany({
+                data: [
+                    {
+                        vehicleId: vehicle.id,
+                        serviceType: "engine_oil",
+                        baseDate: data.saleDate,
+                        nextDue: getEngineNext(data.saleDate),
+                        status: "up_to_date",
+                    },
+                    {
+                        vehicleId: vehicle.id,
+                        serviceType: "transmission",
+                        baseDate: data.saleDate,
+                        nextDue: getTransmissionNext(data.saleDate),
+                        status: "up_to_date",
+                    },
+                ],
+            })
 
+            return { customer, vehicle }
+        })
 
-        revalidatePath('/customers');
+        revalidatePath("/customers")
+
         return {
             success: true,
-            message: 'Customer and vehicle added successfully',
+            message: "Customer & vehicle created successfully",
             data: result
-        };
+        }
+
     } catch (error) {
-        console.error('Error creating customer:', error);
-        return {
-            success: false,
-            message: error instanceof Error ? error.message : 'Failed to add customer and vehicle'
-        };
+        console.error(error)
+        return { success: false, message: "Creation failed" }
     }
 }
+
+/* ---------------------------------------
+   GET CUSTOMER TABLE DATA
+----------------------------------------*/
+
 
 export async function getCustomersWithVehicles(): Promise<CustomerTableData[]> {
-    try {
-        const customers = await prisma.customer.findMany({
-            include: {
-                vehicles: {
-                    include: {
-                        services: {
-                            orderBy: {
-                                serviceDate: 'desc',
-                            },
-                        },
-                    },
-                },
-            },
-            orderBy: {
-                createdAt: 'desc',
-            },
-        });
 
-        const tableData: CustomerTableData[] = customers.flatMap((customer) =>
-            customer.vehicles.map((vehicle) => {
-                const serviceStatus = calculateVehicleServiceStatus(
-                    vehicle.services.map((s) => ({
-                        serviceType: s.serviceType,
-                        serviceDate: s.serviceDate,
-                    }))
-                );
+    const customers = await prisma.customer.findMany({
+        include: {
+            vehicles: {
+                include: {
+                    reminders: true,
+                }
+            }
+        },
+        orderBy: { createdAt: "desc" }
+    })
 
-                const lastService = vehicle.services[0];
-                const lastServiceDate = lastService?.serviceDate || vehicle.saleDate;
-                const nextServiceDate = getNextServiceDate(
-                    lastServiceDate,
-                    lastService?.serviceType || ("engine_oil" as ServiceType)
-                );
+    return customers.flatMap(c =>
+        c.vehicles.map(v => {
 
-                return {
-                    id: vehicle.id,
-                    customerId: customer.id,
-                    vehicleId: vehicle.id,
-                    name: customer.name,
-                    chassis: vehicle.chassisNumber,
-                    model: vehicle.model,
-                    phone: customer.phone,
-                    email: customer.email,
-                    address: customer.address,
-                    engineNumber: vehicle.engineNumber,
-                    branch: vehicle.branch,
-                    hmr: vehicle.hmr,
-                    warrantyStatus: vehicle.warrantyStatus,
-                    saleDate: vehicle.saleDate.toISOString().split('T')[0],
-                    lastService: lastServiceDate.toISOString().split('T')[0],
-                    nextService: nextServiceDate.toISOString().split('T')[0],
-                    status: serviceStatus,
-                };
-            })
-        );
+            const engine = v.reminders.find(
+                r => r.serviceType === "engine_oil"
+            )
 
-        return tableData;
-    } catch (error) {
-        console.error('Error fetching customers:', error);
-        return [];
-    }
+            const trans = v.reminders.find(
+                r => r.serviceType === "transmission"
+            )
+
+            return {
+                customerId: c.id,
+                vehicleId: v.id,
+
+                name: c.name,
+                phone: c.phone,
+                email: c.email,
+                address: c.address,
+
+                chassis: v.chassisNumber,
+                engineNumber: v.engineNumber,
+                model: v.model,
+                branch: v.branch,
+                hmr: v.hmr,
+                warrantyStatus: v.warrantyStatus,
+                saleDate: v.saleDate,
+
+                /* ENGINE */
+                engineStatus: (engine?.status ?? "up_to_date") as CustomerTableData["engineStatus"],
+                engineNext: engine?.nextDue ?? v.saleDate,
+
+                /* TRANSMISSION */
+                transmissionStatus: (trans?.status ?? "up_to_date") as CustomerTableData["transmissionStatus"],
+                transmissionNext: trans?.nextDue ?? v.saleDate,
+            }
+        })
+    )
 }
+
+
+/* ---------------------------------------
+   GET ALL CUSTOMERS
+----------------------------------------*/
 
 export async function getCustomers() {
     return prisma.customer.findMany({
-        include: {
-            vehicles: true,
-        },
-        orderBy: {
-            createdAt: 'desc',
-        },
-    });
+        include: { vehicles: true },
+        orderBy: { createdAt: "desc" },
+    })
 }
+
+/* ---------------------------------------
+   GET SINGLE CUSTOMER + VEHICLE
+----------------------------------------*/
+
+export async function getCustomerWithVehicle(
+    customerId: number,
+    vehicleId: number
+) {
+
+    const customer = await prisma.customer.findUnique({
+        where: { id: customerId },
+        include: {
+            vehicles: {
+                where: { id: vehicleId },
+                include: {
+                    reminders: true,
+                    services: true,
+                }
+            },
+        },
+    })
+
+    if (!customer || customer.vehicles.length === 0) {
+        return { success: false }
+    }
+
+    return {
+        success: true,
+        data: {
+            customer,
+            vehicle: customer.vehicles[0]
+        }
+    }
+}
+
+/* ---------------------------------------
+   UPDATE CUSTOMER + VEHICLE
+----------------------------------------*/
 
 export async function updateCustomerWithVehicle(
     customerId: number,
     vehicleId: number,
-    data: CreateCustomerInput
+    data: {
+        name: string
+        phone: string
+        email?: string
+        address: string
+
+        chassisNumber: string
+        engineNumber: string
+        model: string
+        branch: string
+        hmr?: number
+        warrantyStatus: "in_warranty" | "out_of_warranty"
+        saleDate: Date
+    }
 ) {
+
     try {
         const result = await prisma.$transaction(async (tx) => {
+
             const customer = await tx.customer.update({
                 where: { id: customerId },
                 data: {
@@ -144,8 +231,7 @@ export async function updateCustomerWithVehicle(
                     email: data.email || null,
                     address: data.address,
                 },
-            });
-
+            })
 
             const vehicle = await tx.vehicle.update({
                 where: { id: vehicleId },
@@ -158,80 +244,46 @@ export async function updateCustomerWithVehicle(
                     warrantyStatus: data.warrantyStatus,
                     saleDate: data.saleDate,
                 },
-            });
+            })
 
+            return { customer, vehicle }
+        })
 
-            return { customer, vehicle };
-        });
+        revalidatePath("/customers")
 
-
-        revalidatePath('/customers');
         return {
             success: true,
-            message: 'Customer and vehicle updated successfully',
+            message: "Updated successfully",
             data: result
-        };
-    } catch (error) {
-        console.error('Error updating customer:', error);
-        return {
-            success: false,
-            message: error instanceof Error ? error.message : 'Failed to update customer and vehicle'
-        };
-    }
-}
-
-export async function getCustomerWithVehicle(customerId: number, vehicleId: number) {
-    try {
-        const customer = await prisma.customer.findUnique({
-            where: { id: customerId },
-            include: {
-                vehicles: {
-                    where: { id: vehicleId },
-                },
-            },
-        });
-
-        if (!customer || customer.vehicles.length === 0) {
-            return {
-                success: false,
-                message: 'Customer or vehicle not found',
-                data: null
-            };
         }
 
-        return {
-            success: true,
-            data: {
-                customer,
-                vehicle: customer.vehicles[0]
-            }
-        };
     } catch (error) {
-        console.error('Error fetching customer:', error);
-        return {
-            success: false,
-            message: 'Failed to fetch customer data',
-            data: null
-        };
+        console.error(error)
+        return { success: false, message: "Update failed" }
     }
 }
 
-export async function deleteCustomer(id: number) {
-    try {
-        await prisma.customer.delete({
-            where: { id },
-        });
+/* ---------------------------------------
+   DELETE CUSTOMER
+----------------------------------------*/
 
-        revalidatePath('/customers');
+export async function deleteCustomer(id: number) {
+
+    try {
+
+        await prisma.customer.delete({
+            where: { id }
+        })
+
+        revalidatePath("/customers")
+
         return {
             success: true,
-            message: 'Customer and related data deleted successfully'
-        };
+            message: "Customer deleted successfully"
+        }
+
     } catch (error) {
-        console.error('Error deleting customer:', error);
-        return {
-            success: false,
-            message: error instanceof Error ? error.message : 'Failed to delete customer'
-        };
+        console.error(error)
+        return { success: false, message: "Delete failed" }
     }
 }

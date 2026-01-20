@@ -1,7 +1,7 @@
 "use client";
 
 import { DataTable } from "@/components/table/customer/data-table";
-import { createColumns } from "@/components/table/customer/columns";
+import { createCustomerColumns } from "@/components/table/customer/columns";
 import CreateOrEdit from "@/components/modal/customer/CreateOrEdit";
 import {
   getCustomersWithVehicles,
@@ -9,26 +9,12 @@ import {
 } from "@/app/actions/customer";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { CustomerTableData } from "@/types/customer";
-import { WarrantyStatus } from "@prisma/client";
+import { CustomerTableData, EditCustomerForm } from "@/types/models";
 import { useQuery } from "@tanstack/react-query";
 
 export default function Page() {
-  const [editingCustomer, setEditingCustomer] = useState<{
-    customerId: number;
-    vehicleId: number;
-    name: string;
-    phone: string;
-    email: string | null;
-    address: string;
-    chassisNumber: string;
-    engineNumber: string;
-    model: string;
-    branch: string;
-    hmr: number | null;
-    warrantyStatus: WarrantyStatus;
-    saleDate: Date;
-  } | null>(null);
+  const [editingCustomer, setEditingCustomer] =
+    useState<EditCustomerForm | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
 
@@ -46,16 +32,22 @@ export default function Page() {
     setEditingCustomer({
       customerId: customer.customerId,
       vehicleId: customer.vehicleId,
+
+      // CUSTOMER
       name: customer.name,
       phone: customer.phone,
-      email: customer.email,
+      email: customer.email || "",
       address: customer.address,
+
+      // VEHICLE
       chassisNumber: customer.chassis,
       engineNumber: customer.engineNumber,
       model: customer.model,
       branch: customer.branch,
-      hmr: customer.hmr,
+      hmr: customer.hmr ?? undefined,
       warrantyStatus: customer.warrantyStatus,
+
+      // DATE
       saleDate: new Date(customer.saleDate),
     });
     setEditModalOpen(true);
@@ -83,7 +75,7 @@ export default function Page() {
     }
   };
 
-  const columns = createColumns(handleEdit, handleDelete);
+  const columns = createCustomerColumns(handleEdit, handleDelete);
 
   return (
     <div className="w-full">

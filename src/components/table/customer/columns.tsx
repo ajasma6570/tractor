@@ -1,4 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
+import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -6,100 +8,91 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ServiceStatus, WarrantyStatus } from "@prisma/client";
-import { getStatusBadgeClass, getStatusLabel } from "@/lib/serviceStatus";
-import { format } from "date-fns";
+import { CustomerTableData } from "@/types/models";
 
-export type Customer = {
-  id: number;
-  customerId: number;
-  vehicleId: number;
-  name: string;
-  chassis: string;
-  model: string;
-  phone: string;
-  email: string | null;
-  address: string;
-  engineNumber: string;
-  branch: string;
-  hmr: number | null;
-  warrantyStatus: WarrantyStatus;
-  saleDate: string;
-  lastService: string;
-  nextService: string;
-  status: ServiceStatus;
-};
+function getStatusUI(status: string) {
+  switch (status) {
+    case "expired":
+      return { label: "Expired", color: "bg-red-500" };
+    case "expire_3_days":
+      return { label: "3 Days", color: "bg-orange-500" };
+    case "expire_7_days":
+      return { label: "7 Days", color: "bg-yellow-500" };
+    default:
+      return { label: "OK", color: "bg-green-500" };
+  }
+}
 
-export function createColumns(
-  onEdit: (customer: Customer) => void,
-  onDelete: (customer: Customer) => void,
-): ColumnDef<Customer>[] {
+export function createCustomerColumns(
+  onEdit: (customer: CustomerTableData) => void,
+  onDelete: (customer: CustomerTableData) => void,
+): ColumnDef<CustomerTableData>[] {
   return [
     {
       accessorKey: "name",
-      header: "Customer Name",
-      cell: ({ row }) => (
-        <div className="font-medium">{row.getValue("name")}</div>
-      ),
+      header: "Customer",
     },
-    {
-      accessorKey: "chassis",
-      header: "Chassis Number",
-      cell: ({ row }) => (
-        <div className="font-mono text-muted-foreground">
-          {row.getValue("chassis")}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "model",
-      header: "Model",
-    },
+
     {
       accessorKey: "phone",
       header: "Phone",
     },
+
     {
-      accessorKey: "lastService",
-      header: "Last Service",
-      cell: ({ row }) => (
-        <div>
-          {format(
-            new Date(row.getValue("lastService") as string),
-            "dd-MM-yyyy",
-          )}
-        </div>
-      ),
+      accessorKey: "chassis",
+      header: "Vehicle",
     },
+
     {
-      accessorKey: "nextService",
-      header: "Next Service",
-      cell: ({ row }) => (
-        <div>
-          {format(
-            new Date(row.getValue("nextService") as string),
-            "dd-MM-yyyy",
-          )}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
+      header: "Engine Oil",
       cell: ({ row }) => {
-        const status = row.getValue("status") as ServiceStatus;
+        const status = row.original.engineStatus;
+        const next = row.original.engineNext;
+        const ui = getStatusUI(status);
+
         return (
-          <span
-            className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadgeClass(
-              status,
-            )}`}
-          >
-            {getStatusLabel(status)}
-          </span>
+          <div className="space-y-1">
+            <span
+              className={`text-white text-xs px-2 py-1 rounded ${ui.color}`}
+            >
+              {ui.label}
+            </span>
+
+            {next && (
+              <div className="text-xs text-muted-foreground">
+                Due: {format(new Date(next), "dd MMM")}
+              </div>
+            )}
+          </div>
         );
       },
     },
+
+    {
+      header: "Transmission",
+      cell: ({ row }) => {
+        const status = row.original.transmissionStatus;
+        const next = row.original.transmissionNext;
+        const ui = getStatusUI(status);
+
+        return (
+          <div className="space-y-1">
+            <span
+              className={`text-white text-xs px-2 py-1 rounded ${ui.color}`}
+            >
+              {ui.label}
+            </span>
+
+            {next && (
+              <div className="text-xs text-muted-foreground">
+                Due: {format(new Date(next), "dd MMM")}
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
+
     {
       id: "actions",
       cell: ({ row }) => {
@@ -108,25 +101,20 @@ export function createColumns(
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
+              <Button variant="ghost" size="icon">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
+
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => console.log("View", customer.id)}
-              >
-                View
-              </DropdownMenuItem>
+              <DropdownMenuItem>View</DropdownMenuItem>
+
               <DropdownMenuItem onClick={() => onEdit(customer)}>
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => console.log("Schedule", customer.id)}
-              >
-                Schedule Service
-              </DropdownMenuItem>
+
+              <DropdownMenuItem>Schedule Service</DropdownMenuItem>
+
               <DropdownMenuItem
                 onClick={() => onDelete(customer)}
                 className="text-red-600"
