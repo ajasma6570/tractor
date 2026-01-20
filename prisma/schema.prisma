@@ -13,27 +13,15 @@ enum UserRole {
 
 enum WarrantyStatus {
   in_warranty
-  out_warranty
-}
-
-enum BookingStatus {
-  booked
-  pending
-  not_booked
-}
-
-enum CompletionStatus {
-  in_progress
-  completed
+  out_of_warranty
 }
 
 enum ServiceType {
   engine_oil
   transmission
-  other
 }
 
-enum ServiceStatus {
+enum ReminderStatus {
   up_to_date
   expire_7_days
   expire_3_days
@@ -44,6 +32,26 @@ enum CallStatus {
   called
   not_answered
   rescheduled
+}
+
+enum BookingStatus {
+  booked
+  not_booked
+  pending
+  completed
+}
+
+enum SchedulePriority {
+  normal
+  urgent
+}
+
+enum AuditAction {
+  create
+  update
+  delete
+  login
+  status_change
 }
 
 model User {
@@ -57,19 +65,8 @@ model User {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
 
-  calls CallRegister[] @relation("UserCalls")
-}
-
-model Technician {
-  id        Int      @id @default(autoincrement())
-  name      String
-  phone     String
-  branch    String
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-
-  schedules ServiceSchedule[]
-  services  ServiceRecord[]
+  calls     CallRegister[]
+  auditLogs AuditLog[]
 }
 
 model Customer {
@@ -81,58 +78,91 @@ model Customer {
   createdAt DateTime @default(now())
 
   vehicles  Vehicle[]
-  schedules ServiceSchedule[]
-  services  ServiceRecord[]
   calls     CallRegister[]
+  schedules ServiceSchedule[]
 }
 
 model Vehicle {
-  id              Int            @id @default(autoincrement())
-  customerId      Int
-  chassisNumber   String         @unique
-  engineNumber    String         @unique
-  model           String
-  branch          String
-  hmr             Int?
-  warrantyStatus  WarrantyStatus
-  saleDate        DateTime
-  lastServiceDate DateTime?
-  serviceStatus   ServiceStatus  @default(up_to_date)
-  createdAt       DateTime       @default(now())
+  id             Int            @id @default(autoincrement())
+  customerId     Int
+  chassisNumber  String         @unique
+  engineNumber   String         @unique
+  model          String
+  branch         String
+  hmr            Int?
+  warrantyStatus WarrantyStatus
+  saleDate       DateTime
+  createdAt      DateTime       @default(now())
 
-  customer  Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  schedules ServiceSchedule[]
-  services  ServiceRecord[]
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  reminders ServiceReminder[]
+  services  ServiceHistory[]
   calls     CallRegister[]
+  schedules ServiceSchedule[]
+}
+
+model Technician {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String
+  branch    String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  schedules ServiceSchedule[]
+}
+
+model ServiceReminder {
+  id          Int         @id @default(autoincrement())
+  vehicleId   Int
+  serviceType ServiceType
+
+  baseDate DateTime
+  nextDue  DateTime
+  status   ReminderStatus @default(up_to_date)
+
+  isHandled Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+
+  @@unique([vehicleId, serviceType])
+}
+
+model ServiceHistory {
+  id          Int      @id @default(autoincrement())
+  vehicleId   Int
+  serviceDate DateTime
+  notes       String
+
+  engineOil    Boolean @default(false)
+  transmission Boolean @default(false)
+  otherWork    Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
 }
 
 model ServiceSchedule {
-  id           Int           @id @default(autoincrement())
-  vehicleId    Int
-  customerId   Int
-  bookingDate  DateTime
-  bookingTime  String
+  id         Int @id @default(autoincrement())
+  vehicleId  Int
+  customerId Int
+
+  bookingDate DateTime
+  bookingTime String
+
+  closingDate DateTime?
+
   technicianId Int?
   serviceType  ServiceType
   status       BookingStatus
-  createdAt    DateTime      @default(now())
 
-  vehicle    Vehicle     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  customer   Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  technician Technician? @relation(fields: [technicianId], references: [id], onDelete: SetNull)
-}
+  priority SchedulePriority @default(normal)
 
-model ServiceRecord {
-  id               Int              @id @default(autoincrement())
-  vehicleId        Int
-  customerId       Int
-  serviceType      ServiceType
-  machineHour      Int?
-  workDescription  String
-  technicianId     Int?
-  completionStatus CompletionStatus
-  serviceDate      DateTime
-  createdAt        DateTime         @default(now())
+  createdAt DateTime @default(now())
 
   vehicle    Vehicle     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   customer   Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
@@ -140,17 +170,37 @@ model ServiceRecord {
 }
 
 model CallRegister {
-  id            Int           @id @default(autoincrement())
-  vehicleId     Int
-  customerId    Int
-  callDate      DateTime
-  callTime      String
-  callStatus    CallStatus
-  bookingStatus BookingStatus
-  remarks       String?
-  calledById    Int
+  id         Int        @id @default(autoincrement())
+  vehicleId  Int
+  customerId Int
+  callDate   DateTime
+  callStatus CallStatus
 
-  calledBy User     @relation("UserCalls", fields: [calledById], references: [id], onDelete: Cascade)
-  vehicle  Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  remarks    String?
+  calledById Int
+
+  createdAt DateTime @default(now())
+
+  vehicle  Vehicle  @relation(fields: [vehicleId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+  calledBy User     @relation(fields: [calledById], references: [id])
+}
+
+model AuditLog {
+  id Int @id @default(autoincrement())
+
+  userId   Int?
+  action   AuditAction
+  entity   String // "Customer", "Vehicle", "Schedule" etc
+  entityId Int?
+
+  oldData Json?
+  newData Json?
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
 }
